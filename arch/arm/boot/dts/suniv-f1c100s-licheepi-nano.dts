@@ -6,6 +6,8 @@
 /dts-v1/;
 #include "suniv-f1c100s.dtsi"
 
+#include <dt-bindings/gpio/gpio.h>
+
 / {
 	model = "Lichee Pi Nano";
 	compatible = "licheepi,licheepi-nano", "allwinner,suniv-f1c100s";
@@ -17,10 +19,157 @@
 	chosen {
 		stdout-path = "serial0:115200n8";
 	};
+
+	panel: panel {
+		compatible = "qiaodian,qd43003c0-40", "simple-panel";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		enable-gpios = <&pio 4 6 GPIO_ACTIVE_HIGH>;
+		power-supply = <&reg_vcc3v3>;
+
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			panel_input: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&tcon0_out_lcd>;
+			};
+		};
+	};
+
+	reg_vcc3v3: vcc3v3 {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
 };
 
 &uart0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart0_pe_pins>;
+	status = "okay";
+};
+
+&uart2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart2_pe_pins>;
+	status = "okay";
+};
+
+&spi0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi0_pc_pins>;
+	status = "okay";
+	flash@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "winbond,w25q128", "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <50000000>;
+	};
+};
+
+&spi1 {
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi1_pa_pins>;
+	status = "disabled";
+        ili9341@0 {
+                  compatible = "adafruit,yx240qv29", "ilitek,ili9341";
+                  reg = <0>;
+                  spi-max-frequency = <40000000>;
+                  rotate = <270>;
+                  bgr;
+                  fps = <10>;
+                  buswidth = <8>;
+                  reset-gpios = <&pio 4 3 GPIO_ACTIVE_LOW>;
+                  dc-gpios = <&pio 4 4 GPIO_ACTIVE_HIGH>;
+                  debug = <3>;
+                  init = <0x1000001
+                          0x2000064
+                          0x10000ef 0x03 0x80 0x02
+                          0x10000cf 0x00 0xc1 0x30
+                          0x10000ed 0x64 0x03 0x12 0x81
+                          0x10000e8 0x85 0x00 0x78
+                          0x10000cb 0x39 0x2C 0x00 0x34 0x02
+                          0x10000f7 0x20
+                          0x10000ea 0x00 0x00
+                          0x10000c0 0x23
+                          0x10000c1 0x10
+                          0x10000c5 0x3e 0x28
+                          0x10000c7 0x86
+                          0x1000036 0x48
+                          0x1000037 0x00
+                          0x100003a 0x55
+                          0x10000b1 0x00 0x18
+                          0x10000b6 0x08 0x82 0x27
+                          0x10000f2 0x00 
+                          0x1000026 0x01
+                          0x10000e0 0x0F 0x31 0x2B 0x0C 0x0E 0x08 0x4E 0xF1 0x37 0x07 0x10 0x03 0x0E 0x09 0x00
+                          0x10000e1 0x00 0x0E 0x14 0x03 0x11 0x07 0x31 0xC1 0x48 0x08 0x0F 0x0C 0x31 0x36 0x0F
+                          0x2000010
+                          0x1000011
+                          0x2000010
+                          0x1000029
+                          0x2000010>;
+        };
+};
+
+
+
+
+
+
+&codec {
+	allwinner,audio-routing =
+		"Headphone", "HP",
+		"Headphone", "HPCOM",
+		"MIC", "Mic";
+	status = "okay";
+};
+
+&be0 {
+	status = "okay";
+};
+
+&de {
+	status = "okay";
+};
+
+&mmc0 {
+	vmmc-supply = <&reg_vcc3v3>;
+	bus-width = <4>;
+	broken-cd;
+	status = "okay";
+};
+
+&tcon0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&lcd_rgb666_pins>;
+	status = "okay";
+};
+
+&tcon0_out {
+	tcon0_out_lcd: endpoint@0 {
+		reg = <0>;
+		remote-endpoint = <&panel_input>;
+	};
+};
+
+&otg_sram {
+	status = "okay";
+};
+
+&usb_otg {
+	dr_mode = "host";
+	status = "okay";
+};
+
+&usbphy {
+	usb0_id_det = <&pio 4 2 GPIO_ACTIVE_HIGH>; /* PE2 */
 	status = "okay";
 };
